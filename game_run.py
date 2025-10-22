@@ -8,7 +8,7 @@ class Bird:
         self.gravity = 0.6
         self.lift = -8
         self.size = 20
-        self.points = -3
+        self.points = 0
         self.buffer = 2
 
     def collision(self, pipe,top_rect,bottom_rect):  #check for collision with a pipe
@@ -37,7 +37,7 @@ class Pipe:
         self.pointer = None
         self.position = pygame.Vector2(640, random.randint(100, 380))
         self.width = 75
-        self.passed = False
+        self.passed = True
         self.update_rects()
 
     
@@ -52,14 +52,17 @@ class Pipe:
         self.top_rect = pygame.Rect(self.position.x, 0, self.width, self.position.y - 75)   #initialize each of the pipe rectangles
         self.bottom_rect = pygame.Rect(self.position.x, self.position.y + 75, self.width, 480 - (self.position.y + 75))
 
-    def update(self):   #update position and rectangles
+    def update(self):   
+        #check for collision with bird
         if bird.collision(self,self.top_rect,self.bottom_rect):
             bird.game_over()
 
-        if not self.passed and bird.position.x <= self.position.x:
+        #as long as the bird hasn't already passed the pipe, if the bird passes the pipe, increase points by 1
+        if not self.passed and bird.position.x <= self.position.x:  
             bird.points += 1
             self.passed = True
-            print(bird.points)
+
+        #update position and rectangles
         self.position.x += self.slide_speed
         self.update_rects()
 
@@ -68,58 +71,68 @@ class Pipe:
         pygame.draw.rect(screen, (0, 255, 0), self.bottom_rect)
 
 def init_pipes(num_pipes):
+    # create linked list of pipes
     pipes = []
     for _ in range(num_pipes):
         pipes.append(Pipe())
     
+    #apply pointers and initialize positions
     pipes[0].pointer = pipes[-1]
     for pipe in pipes[1:]:
         pipe.pointer = pipes[pipes.index(pipe)-1]
         pipe.circle_back() 
+        pipe.passed = True  #set passed to true so that points don't increase on initialization 
     
     return pipes
-    
 
 
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((640, 480))
+        pygame.display.set_caption("Flappy Bird AI")
+        self.font = pygame.font.SysFont(None, 48)
+        self.clock = pygame.time.Clock()
+        self.bird = Bird()
+        self.pipes = init_pipes(3)
+        # Patch: let Pipe/Bird access each other via Game instance
+        global bird
+        bird = self.bird
 
-pygame.init()
-screen = pygame.display.set_mode((640, 480))
-pygame.display.set_caption("Flappy Bird AI")
-font = pygame.font.SysFont(None, 48)
-clock = pygame.time.Clock()
-bird = Bird()
-pipes = init_pipes(3)
+    def run(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.bird.velocity.y = self.bird.lift
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                bird.velocity.y = bird.lift
+            self.screen.fill((70, 100, 255))
+            self.bird.update()
+            self.bird.draw(self.screen)
+
+            for pipe in self.pipes:
+                pipe.update()
+                if pipe.position.x + pipe.width < 0:
+                    pipe.circle_back()
+                pipe.draw(self.screen)
+
+            # Draw score
+            score_text = self.font.render(f"Score: {self.bird.points}", True, (255, 255, 255))
+            self.screen.blit(score_text, (20, 20))
+
+            # Draw FPS
+            fps = int(self.clock.get_fps())
+            fps_text = self.font.render(f"FPS: {fps}", True, (255, 255, 255))
+            self.screen.blit(fps_text, (500, 20))
+
+            pygame.display.flip()
+            self.clock.tick(60)
 
 
+if __name__ == "__main__":
+    game = Game()
+    game.run() 
 
-    screen.fill((70, 100, 255))
-    bird.update()
-    bird.draw(screen)
-
-    for pipe in pipes:
-        pipe.update()
-        if pipe.position.x + pipe.width < 0:
-            pipe.circle_back()
-        pipe.draw(screen)
-
-    # Draw score
-    score_text = font.render(f"Score: {bird.points}", True, (255, 255, 255))
-    screen.blit(score_text, (20, 20))
-
-    # Draw FPS
-    fps = int(clock.get_fps())
-    fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
-    screen.blit(fps_text, (500, 20))
-
-    pygame.display.flip()
-    clock.tick(60)
-    
