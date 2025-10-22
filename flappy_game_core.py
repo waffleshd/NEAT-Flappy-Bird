@@ -2,7 +2,7 @@ import random
 import pygame
 
 class Bird:
-    def __init__(self): #initialize the bird with position, velocity, gravity, lift, and size
+    def __init__(self,game): #initialize the bird with position, velocity, gravity, lift, and size
         self.position = pygame.Vector2(100, 250)
         self.velocity = pygame.Vector2(0, 0)
         self.gravity = 0.6
@@ -10,6 +10,7 @@ class Bird:
         self.size = 20
         self.points = 0
         self.buffer = 2
+        self.game = game
 
     def collision(self, pipe,top_rect,bottom_rect):  #check for collision with a pipe
         bird_rect = pygame.Rect(self.position.x-self.buffer - self.size-self.buffer, self.position.y - self.size+self.buffer, (self.size-self.buffer) * 2, (self.size-self.buffer  )  * 2)
@@ -18,7 +19,7 @@ class Bird:
     def game_over(self):
         print("Collision! Game Over.")
         pygame.quit()
-        exit()
+        self.game.running = False
     
     def update(self):
         self.velocity.y += self.gravity #apply gravity to velocity
@@ -78,11 +79,12 @@ class Game:
         pygame.display.set_caption("Flappy Bird AI")
         self.font = pygame.font.SysFont(None, 48)
         self.clock = pygame.time.Clock()
-        self.bird = Bird()
+        self.bird = Bird(self)
         self.pipes = self.init_pipes(3)
         # Patch: let Pipe/Bird access each other via Game instance
         global bird
         bird = self.bird
+        self.running = True
     
     def init_pipes(self,num_pipes):
         # create linked list of pipes
@@ -100,35 +102,54 @@ class Game:
         return pipes
 
     def run(self):
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        self.bird.velocity.y = self.bird.lift
+        #Add a while self.running loop to run the game from here, but since we are updating via other scripts, we will just keep the structure
 
-            self.screen.fill((70, 100, 255))
-            self.bird.update()
+
+        #The following block is commented out to disable manual control
+        '''
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                self.running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.bird.velocity.y = self.bird.lift
+        '''
+
+        self.screen.fill((70, 100, 255))
+        self.bird.update()
+        if self.running:
             self.bird.draw(self.screen)
+        
 
-            for pipe in self.pipes:
-                pipe.update()
-                if pipe.position.x + pipe.width < 0:
-                    pipe.circle_back()
+        for pipe in self.pipes:
+            pipe.update()
+            if pipe.position.x + pipe.width < 0:
+                pipe.circle_back()
+            if self.running:
                 pipe.draw(self.screen)
+                pygame.display.flip()
 
-            # Draw score
-            score_text = self.font.render(f"Score: {self.bird.points}", True, (255, 255, 255))
-            self.screen.blit(score_text, (20, 20))
 
-            # Draw FPS
-            fps = int(self.clock.get_fps())
-            fps_text = self.font.render(f"FPS: {fps}", True, (255, 255, 255))
-            self.screen.blit(fps_text, (500, 20))
+            #Redundant for now
+            """
+            try:
 
-            pygame.display.flip()
+                # Draw score
+                score_text = self.font.render(f"Score: {self.bird.points}", True, (255, 255, 255))
+                self.screen.blit(score_text, (20, 20))
+
+                # Draw FPS
+                fps = int(self.clock.get_fps())
+                fps_text = self.font.render(f"FPS: {fps}", True, (255, 255, 255))
+                self.screen.blit(fps_text, (500, 20))
+
+                pygame.display.flip()
+                
+            except:
+                pass
+            """
+              
             self.clock.tick(60)
 
 
