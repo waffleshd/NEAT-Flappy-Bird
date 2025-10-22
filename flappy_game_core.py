@@ -70,21 +70,6 @@ class Pipe:
         pygame.draw.rect(screen, (0, 255, 0), self.top_rect)
         pygame.draw.rect(screen, (0, 255, 0), self.bottom_rect)
 
-def init_pipes(num_pipes):
-    # create linked list of pipes
-    pipes = []
-    for _ in range(num_pipes):
-        pipes.append(Pipe())
-    
-    #apply pointers and initialize positions
-    pipes[0].pointer = pipes[-1]
-    for pipe in pipes[1:]:
-        pipe.pointer = pipes[pipes.index(pipe)-1]
-        pipe.circle_back() 
-        pipe.passed = True  #set passed to true so that points don't increase on initialization 
-    
-    return pipes
-
 
 class Game:
     def __init__(self):
@@ -94,10 +79,25 @@ class Game:
         self.font = pygame.font.SysFont(None, 48)
         self.clock = pygame.time.Clock()
         self.bird = Bird()
-        self.pipes = init_pipes(3)
+        self.pipes = self.init_pipes(3)
         # Patch: let Pipe/Bird access each other via Game instance
         global bird
         bird = self.bird
+    
+    def init_pipes(self,num_pipes):
+        # create linked list of pipes
+        pipes = []
+        for _ in range(num_pipes):
+            pipes.append(Pipe())
+        
+        #apply pointers and initialize positions
+        pipes[0].pointer = pipes[-1]
+        for pipe in pipes[1:]:
+            pipe.pointer = pipes[pipes.index(pipe)-1]
+            pipe.circle_back() 
+            pipe.passed = True  #set passed to true so that points don't increase on initialization 
+        
+        return pipes
 
     def run(self):
         while True:
