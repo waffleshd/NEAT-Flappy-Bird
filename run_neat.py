@@ -3,6 +3,7 @@ import pickle
 from neat_flappy import evaluate_genomes, CONFIG_PATH
 
 def run_neat():
+    #import config
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -19,11 +20,11 @@ def run_neat():
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    # Run for up to 50 generations
+    # Run for up to 50 generations (adjust as needed)
     winner = p.run(evaluate_genomes, 50)
 
     with open("best_bird.pkl", "wb") as f:
-        pickle.dump(winner, f)
+        pickle.dump(winner, f)  #dump the best genome to a file
 
     print("\nBest genome:\n{!s}".format(winner))
 
