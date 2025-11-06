@@ -45,7 +45,7 @@ bird.next_pipe = game.pipes[0]  # Set initial next pipe
 
 clock = pygame.time.Clock()
 
-while game.running:
+while game.running and bird.collided == False:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game.running = False
